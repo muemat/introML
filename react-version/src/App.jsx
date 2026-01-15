@@ -23,6 +23,7 @@ function App() {
     [0, 0, 0, 0], // Group 2
   ])
   const [isTraining, setIsTraining] = useState(false)
+  const [showTestData, setShowTestData] = useState(false)
 
   // Calculate outputs
   const outputs = weights.map((groupWeights) =>
@@ -50,6 +51,26 @@ function App() {
     [useRef(null), useRef(null), useRef(null), useRef(null)], // Group 2
   ]
 
+  // Refs for minus buttons - 3 groups, 4 weights each
+  const minusButtonRefs = [
+    [useRef(null), useRef(null), useRef(null), useRef(null)], // Group 0
+    [useRef(null), useRef(null), useRef(null), useRef(null)], // Group 1
+    [useRef(null), useRef(null), useRef(null), useRef(null)], // Group 2
+  ]
+
+  // Refs for plus buttons - 3 groups, 4 weights each
+  const plusButtonRefs = [
+    [useRef(null), useRef(null), useRef(null), useRef(null)], // Group 0
+    [useRef(null), useRef(null), useRef(null), useRef(null)], // Group 1
+    [useRef(null), useRef(null), useRef(null), useRef(null)], // Group 2
+  ]
+
+  // Refs for sum circles - 3 groups
+  const sumCircleRefs = [useRef(null), useRef(null), useRef(null)]
+
+  // Refs for output circles - 3 outputs
+  const outputRefs = [useRef(null), useRef(null), useRef(null)]
+
   // Load training data values into inputs
   const loadTrainingData = (values) => {
     setInput0(Math.max(0, Math.min(1, values[0])))
@@ -68,6 +89,13 @@ function App() {
     [1, 1, 1, 1],
   ]
   const trainingLabels = [0, 0, 1, 1, 2, 2]
+
+  // Test data values and labels
+  const testData = [
+    [1, 1, 0, 0], // test01
+    [1, 0, 1, 1], // test02
+  ]
+  const testLabels = [0, 2] // first class, last class
 
   // Evaluate training data: calculate outputs and check if prediction matches label
   const evaluateTrainingData = (dataValues) => {
@@ -246,32 +274,64 @@ function App() {
   return (
     <div className="app">
       <div className="main-row">
-        <ConnectionLines inputRefs={inputRefs} weightRefs={weightRefs} />
+        <ConnectionLines 
+          inputRefs={inputRefs} 
+          weightRefs={weightRefs}
+          minusButtonRefs={minusButtonRefs}
+          plusButtonRefs={plusButtonRefs}
+          sumCircleRefs={sumCircleRefs}
+          outputRefs={outputRefs}
+        />
         {/* Left side - Inputs and Presets */}
         <div className="side-column left-column">
           <div className="left-side-container">
-            {/* Training data boxes */}
-            <div className="presets-container">
-              {trainingData.map((dataValues, index) => {
-                const predictedLabel = evaluateTrainingData(dataValues)
-                const actualLabel = trainingLabels[index]
-                // Correct only if there's a single maximum and it matches the label
-                const isCorrect = predictedLabel !== -1 && predictedLabel === actualLabel
-                // Check if this training data is currently loaded
-                const isLoaded = input0 === dataValues[0] && 
-                                input1 === dataValues[1] && 
-                                input2 === dataValues[2] && 
-                                input3 === dataValues[3]
-                return (
-                  <TrainingDataBox
-                    key={index}
-                    values={dataValues}
-                    isCorrect={isCorrect}
-                    isLoaded={isLoaded}
-                    onClick={() => loadTrainingData(dataValues)}
-                  />
-                )
-              })}
+            <div className="training-test-wrapper">
+              {/* Training data boxes */}
+              {!showTestData && (
+                <div className="presets-container">
+                  {trainingData.map((dataValues, index) => {
+                    const predictedLabel = evaluateTrainingData(dataValues)
+                    const actualLabel = trainingLabels[index]
+                    // Correct only if there's a single maximum and it matches the label
+                    const isCorrect = predictedLabel !== -1 && predictedLabel === actualLabel
+                    // Check if this training data is currently loaded
+                    const isLoaded = input0 === dataValues[0] && 
+                                    input1 === dataValues[1] && 
+                                    input2 === dataValues[2] && 
+                                    input3 === dataValues[3]
+                    return (
+                      <TrainingDataBox
+                        key={index}
+                        index={index}
+                        values={dataValues}
+                        isCorrect={isCorrect}
+                        isLoaded={isLoaded}
+                        onClick={() => loadTrainingData(dataValues)}
+                      />
+                    )
+                  })}
+                </div>
+              )}
+              
+              {/* Test data boxes */}
+              {showTestData && (
+                <div className="test-container">
+                  {testData.map((dataValues, index) => {
+                    const predictedLabel = evaluateTrainingData(dataValues)
+                    const actualLabel = testLabels[index]
+                    const isCorrect = predictedLabel !== -1 && predictedLabel === actualLabel
+                    return (
+                      <TestDataBox 
+                        key={index}
+                        index={index} 
+                        imagePath={`/gfx/test0${index + 1}.png`} 
+                        isCorrect={isCorrect}
+                        onClick={() => loadTrainingData(dataValues)}
+                      />
+                    )
+                  })}
+                </div>
+              )}
             </div>
             
             {/* Inputs */}
@@ -286,26 +346,36 @@ function App() {
 
         {/* Center - Orange box with weights */}
         <div className="center-column">
-          <div className="orange-box">
-            <button className="reset-btn" onClick={resetWeights} disabled={isTraining}>
-              Reset
-            </button>
+          <div className="orange-box-wrapper">
+            <div className="orange-box">
+              {weights.map((groupWeights, groupIndex) => (
+                <WeightGroup
+                  key={groupIndex}
+                  weights={groupWeights}
+                  groupIndex={groupIndex}
+                  onWeightUpdate={updateWeight}
+                  onBulkDecrement={() => bulkUpdateWeights(groupIndex, -1)}
+                  onBulkIncrement={() => bulkUpdateWeights(groupIndex, 1)}
+                  canUpdateWeight={canUpdateWeight}
+                  canBulkUpdateWeights={canBulkUpdateWeights}
+                  weightRefs={weightRefs[groupIndex]}
+                  minusButtonRefs={minusButtonRefs[groupIndex]}
+                  plusButtonRefs={plusButtonRefs[groupIndex]}
+                  sumCircleRef={sumCircleRefs[groupIndex]}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="control-buttons-column">
             <button className="ml-btn" onClick={runMLTraining} disabled={isTraining}>
               ML
             </button>
-            {weights.map((groupWeights, groupIndex) => (
-              <WeightGroup
-                key={groupIndex}
-                weights={groupWeights}
-                groupIndex={groupIndex}
-                onWeightUpdate={updateWeight}
-                onBulkDecrement={() => bulkUpdateWeights(groupIndex, -1)}
-                onBulkIncrement={() => bulkUpdateWeights(groupIndex, 1)}
-                canUpdateWeight={canUpdateWeight}
-                canBulkUpdateWeights={canBulkUpdateWeights}
-                weightRefs={weightRefs[groupIndex]}
-              />
-            ))}
+            <button className="reset-btn" onClick={resetWeights} disabled={isTraining}>
+              Reset
+            </button>
+            <button className="test-btn" onClick={() => setShowTestData(!showTestData)} disabled={isTraining}>
+              {showTestData ? 'Train' : 'Test'}
+            </button>
           </div>
         </div>
 
@@ -316,6 +386,7 @@ function App() {
             return (
               <div key={index} className="output-container">
                 <div 
+                  ref={outputRefs[index]}
                   className={`circle result-circle output-circle ${isHighest ? 'highest-output' : ''}`}
                 >
                   {output}
@@ -340,32 +411,47 @@ const InputControl = React.forwardRef(({ value }, ref) => {
   )
 })
 
-function TrainingDataBox({ values, isCorrect, isLoaded, onClick }) {
+function TrainingDataBox({ index, values, isCorrect, isLoaded, onClick }) {
+  const imageNumber = String(index + 1).padStart(2, '0')
+  const imagePath = `/gfx/train${imageNumber}.png`
+  const statusIcon = isCorrect ? '✓' : '✕'
+  const statusClass = isCorrect ? 'status-icon correct' : 'status-icon incorrect'
+  
   return (
     <div 
       className={`preset-box training-data-box ${isCorrect ? 'correct' : 'incorrect'} ${isLoaded ? 'loaded' : ''}`} 
       onClick={onClick}
     >
-      {values.map((val, index) => (
-        <span key={index} className="preset-value">
-          {val}
-        </span>
-      ))}
+      <img 
+        src={imagePath} 
+        alt={`Training data ${index + 1}`}
+        className="training-data-image"
+      />
+      <span className={statusClass}>{statusIcon}</span>
     </div>
   )
 }
 
-function WeightGroup({ weights, groupIndex, onWeightUpdate, onBulkDecrement, onBulkIncrement, canUpdateWeight, canBulkUpdateWeights, weightRefs }) {
+function TestDataBox({ index, imagePath, isCorrect, onClick }) {
+  const statusIcon = isCorrect ? '✓' : '✕'
+  const statusClass = isCorrect ? 'status-icon correct' : 'status-icon incorrect'
+
+  return (
+    <div className="test-box" onClick={onClick}>
+      <img 
+        src={imagePath} 
+        alt={`Test data ${index + 1}`}
+        className="training-data-image"
+      />
+      <span className={statusClass}>{statusIcon}</span>
+    </div>
+  )
+}
+
+function WeightGroup({ weights, groupIndex, onWeightUpdate, onBulkDecrement, onBulkIncrement, canUpdateWeight, canBulkUpdateWeights, weightRefs, minusButtonRefs, plusButtonRefs, sumCircleRef }) {
   return (
     <div className="control-group">
       <div className="big-buttons-row">
-        <button 
-          className="big-step-btn weight-big-btn" 
-          onClick={onBulkIncrement}
-          disabled={!canBulkUpdateWeights(groupIndex, 1)}
-        >
-          +
-        </button>
         <button 
           className="big-step-btn weight-big-btn" 
           onClick={onBulkDecrement}
@@ -373,34 +459,47 @@ function WeightGroup({ weights, groupIndex, onWeightUpdate, onBulkDecrement, onB
         >
           −
         </button>
+        <button 
+          className="big-step-btn weight-big-btn" 
+          onClick={onBulkIncrement}
+          disabled={!canBulkUpdateWeights(groupIndex, 1)}
+        >
+          +
+        </button>
       </div>
-      <div className="weight-controls">
-        {weights.map((weight, weightIndex) => (
-          <div key={weightIndex} className="control-row weight-control-row">
-            <button
-              className="step-btn weight-btn"
-              onClick={() => onWeightUpdate(groupIndex, weightIndex, -1)}
-              disabled={!canUpdateWeight(groupIndex, weightIndex, -1)}
-              ref={weightRefs[weightIndex]}
-            >
-              -
-            </button>
-            <div className="orange-circle weight-circle">{weight}</div>
-            <button
-              className="step-btn weight-btn"
-              onClick={() => onWeightUpdate(groupIndex, weightIndex, 1)}
-              disabled={!canUpdateWeight(groupIndex, weightIndex, 1)}
-            >
-              +
-            </button>
-          </div>
-        ))}
+      <div className="control-group-wrapper">
+        <div className="weight-controls">
+          {weights.map((weight, weightIndex) => (
+            <div key={weightIndex} className="control-row weight-control-row">
+              <button
+                ref={minusButtonRefs[weightIndex]}
+                className="step-btn weight-btn"
+                onClick={() => onWeightUpdate(groupIndex, weightIndex, -1)}
+                disabled={!canUpdateWeight(groupIndex, weightIndex, -1)}
+              >
+                -
+              </button>
+              <div ref={weightRefs[weightIndex]} className="orange-circle weight-circle">{weight}</div>
+              <button
+                ref={plusButtonRefs[weightIndex]}
+                className="step-btn weight-btn"
+                onClick={() => onWeightUpdate(groupIndex, weightIndex, 1)}
+                disabled={!canUpdateWeight(groupIndex, weightIndex, 1)}
+              >
+                +
+              </button>
+            </div>
+          ))}
+        </div>
+        <div ref={sumCircleRef} className="sum-circle">
+          <span className="sum-symbol">Σ</span>
+        </div>
       </div>
     </div>
   )
 }
 
-function ConnectionLines({ inputRefs, weightRefs }) {
+function ConnectionLines({ inputRefs, weightRefs, minusButtonRefs, plusButtonRefs, sumCircleRefs, outputRefs }) {
   const svgRef = useRef(null)
   const containerRef = useRef(null)
   const [lines, setLines] = useState([])
@@ -425,18 +524,18 @@ function ConnectionLines({ inputRefs, weightRefs }) {
         const inputX = inputCenterX + inputRect.width * 0.4
         const inputY = inputCenterY
 
-        // Connect to corresponding weight group: endpoint near the left side of the '-' button
+        // Connect to corresponding weight group: endpoint at the left side of the '-' button
         for (let groupIdx = 0; groupIdx < 3; groupIdx++) {
-          const weightRef = weightRefs[groupIdx]?.[inputIdx]
-          if (!weightRef?.current) continue
+          const minusButtonRef = minusButtonRefs[groupIdx]?.[inputIdx]
+          if (!minusButtonRef?.current) continue
 
-          const weightRect = weightRef.current.getBoundingClientRect()
-          const weightCenterY = weightRect.top + weightRect.height / 2 - containerRect.top
+          const minusButtonRect = minusButtonRef.current.getBoundingClientRect()
+          const minusButtonLeftX = minusButtonRect.left - containerRect.left
+          const minusButtonCenterY = minusButtonRect.top + minusButtonRect.height / 2 - containerRect.top
 
-          // End slightly to the left of the '-' button's left edge
-          const weightLeftX = weightRect.left - containerRect.left
-          const weightX = weightLeftX - 4
-          const weightY = weightCenterY
+          // End at the left side of the minus button
+          const weightX = minusButtonLeftX
+          const weightY = minusButtonCenterY
 
           newLines.push({
             id: `input${inputIdx}-group${groupIdx}-weight${inputIdx}`,
@@ -446,6 +545,74 @@ function ConnectionLines({ inputRefs, weightRefs }) {
             y2: weightY,
           })
         }
+      }
+
+      // Lines from plus buttons to sum circles
+      for (let groupIdx = 0; groupIdx < 3; groupIdx++) {
+        const sumCircleRef = sumCircleRefs[groupIdx]
+        if (!sumCircleRef?.current) continue
+
+        const sumCircleRect = sumCircleRef.current.getBoundingClientRect()
+        const sumCircleLeftX = sumCircleRect.left - containerRect.left
+        const sumCircleCenterY = sumCircleRect.top + sumCircleRect.height / 2 - containerRect.top
+
+        // End point on the left side of the sum circle
+        const sumX = sumCircleLeftX
+        const sumY = sumCircleCenterY
+
+        // Connect from each plus button in this group
+        for (let weightIdx = 0; weightIdx < 4; weightIdx++) {
+          const plusButtonRef = plusButtonRefs[groupIdx]?.[weightIdx]
+          if (!plusButtonRef?.current) continue
+
+          const plusButtonRect = plusButtonRef.current.getBoundingClientRect()
+          const plusButtonRightX = plusButtonRect.right - containerRect.left
+          const plusButtonCenterY = plusButtonRect.top + plusButtonRect.height / 2 - containerRect.top
+
+          // Start a bit to the right of the plus button
+          const plusX = plusButtonRightX + 4
+          const plusY = plusButtonCenterY
+
+          newLines.push({
+            id: `plus${weightIdx}-group${groupIdx}-sum`,
+            x1: plusX,
+            y1: plusY,
+            x2: sumX,
+            y2: sumY,
+          })
+        }
+      }
+
+      // Lines from sum circles to output circles
+      for (let groupIdx = 0; groupIdx < 3; groupIdx++) {
+        const sumCircleRef = sumCircleRefs[groupIdx]
+        const outputRef = outputRefs[groupIdx]
+        
+        if (!sumCircleRef?.current || !outputRef?.current) continue
+
+        const sumCircleRect = sumCircleRef.current.getBoundingClientRect()
+        const sumCircleRightX = sumCircleRect.right - containerRect.left
+        const sumCircleCenterY = sumCircleRect.top + sumCircleRect.height / 2 - containerRect.top
+
+        // Start from the right side of the sum circle
+        const sumX = sumCircleRightX
+        const sumY = sumCircleCenterY
+
+        const outputRect = outputRef.current.getBoundingClientRect()
+        const outputLeftX = outputRect.left - containerRect.left
+        const outputCenterY = outputRect.top + outputRect.height / 2 - containerRect.top
+
+        // End at the left side of the output circle
+        const outputX = outputLeftX
+        const outputY = outputCenterY
+
+        newLines.push({
+          id: `sum${groupIdx}-output${groupIdx}`,
+          x1: sumX,
+          y1: sumY,
+          x2: outputX,
+          y2: outputY,
+        })
       }
 
       setLines(newLines)
@@ -481,12 +648,40 @@ function ConnectionLines({ inputRefs, weightRefs }) {
       })
     })
 
+    minusButtonRefs.forEach((group) => {
+      group.forEach((ref) => {
+        if (ref?.current) {
+          resizeObserver.observe(ref.current)
+        }
+      })
+    })
+
+    plusButtonRefs.forEach((group) => {
+      group.forEach((ref) => {
+        if (ref?.current) {
+          resizeObserver.observe(ref.current)
+        }
+      })
+    })
+
+    sumCircleRefs.forEach((ref) => {
+      if (ref?.current) {
+        resizeObserver.observe(ref.current)
+      }
+    })
+
+    outputRefs.forEach((ref) => {
+      if (ref?.current) {
+        resizeObserver.observe(ref.current)
+      }
+    })
+
     return () => {
       window.removeEventListener('resize', updateLines)
       clearTimeout(initialTimeout)
       resizeObserver.disconnect()
     }
-  }, [inputRefs, weightRefs])
+  }, [inputRefs, weightRefs, minusButtonRefs, plusButtonRefs, sumCircleRefs, outputRefs])
 
   return (
     <div ref={containerRef} className="connection-lines">
