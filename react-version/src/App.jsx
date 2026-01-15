@@ -358,28 +358,7 @@ function TrainingDataBox({ values, isCorrect, isLoaded, onClick }) {
 function WeightGroup({ weights, groupIndex, onWeightUpdate, onBulkDecrement, onBulkIncrement, canUpdateWeight, canBulkUpdateWeights, weightRefs }) {
   return (
     <div className="control-group">
-      <div className="weight-controls">
-        {weights.map((weight, weightIndex) => (
-          <div key={weightIndex} className="control-row weight-control-row">
-            <button
-              className="step-btn weight-btn"
-              onClick={() => onWeightUpdate(groupIndex, weightIndex, -1)}
-              disabled={!canUpdateWeight(groupIndex, weightIndex, -1)}
-            >
-              -
-            </button>
-            <div ref={weightRefs[weightIndex]} className="orange-circle weight-circle">{weight}</div>
-            <button
-              className="step-btn weight-btn"
-              onClick={() => onWeightUpdate(groupIndex, weightIndex, 1)}
-              disabled={!canUpdateWeight(groupIndex, weightIndex, 1)}
-            >
-              +
-            </button>
-          </div>
-        ))}
-      </div>
-      <div className="big-buttons-column">
+      <div className="big-buttons-row">
         <button 
           className="big-step-btn weight-big-btn" 
           onClick={onBulkIncrement}
@@ -394,6 +373,28 @@ function WeightGroup({ weights, groupIndex, onWeightUpdate, onBulkDecrement, onB
         >
           −
         </button>
+      </div>
+      <div className="weight-controls">
+        {weights.map((weight, weightIndex) => (
+          <div key={weightIndex} className="control-row weight-control-row">
+            <button
+              className="step-btn weight-btn"
+              onClick={() => onWeightUpdate(groupIndex, weightIndex, -1)}
+              disabled={!canUpdateWeight(groupIndex, weightIndex, -1)}
+              ref={weightRefs[weightIndex]}
+            >
+              -
+            </button>
+            <div className="orange-circle weight-circle">{weight}</div>
+            <button
+              className="step-btn weight-btn"
+              onClick={() => onWeightUpdate(groupIndex, weightIndex, 1)}
+              disabled={!canUpdateWeight(groupIndex, weightIndex, 1)}
+            >
+              +
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -417,17 +418,25 @@ function ConnectionLines({ inputRefs, weightRefs }) {
         if (!inputRef?.current) continue
 
         const inputRect = inputRef.current.getBoundingClientRect()
-        const inputX = inputRect.left + inputRect.width / 2 - containerRect.left
-        const inputY = inputRect.top + inputRect.height / 2 - containerRect.top
+        const inputCenterX = inputRect.left + inputRect.width / 2 - containerRect.left
+        const inputCenterY = inputRect.top + inputRect.height / 2 - containerRect.top
 
-        // Connect to corresponding weight in each group (weightIndex = inputIdx)
+        // Start a bit to the right of the input circle
+        const inputX = inputCenterX + inputRect.width * 0.4
+        const inputY = inputCenterY
+
+        // Connect to corresponding weight group: endpoint near the left side of the '-' button
         for (let groupIdx = 0; groupIdx < 3; groupIdx++) {
           const weightRef = weightRefs[groupIdx]?.[inputIdx]
           if (!weightRef?.current) continue
 
           const weightRect = weightRef.current.getBoundingClientRect()
-          const weightX = weightRect.left + weightRect.width / 2 - containerRect.left
-          const weightY = weightRect.top + weightRect.height / 2 - containerRect.top
+          const weightCenterY = weightRect.top + weightRect.height / 2 - containerRect.top
+
+          // End slightly to the left of the '-' button's left edge
+          const weightLeftX = weightRect.left - containerRect.left
+          const weightX = weightLeftX - 4
+          const weightY = weightCenterY
 
           newLines.push({
             id: `input${inputIdx}-group${groupIdx}-weight${inputIdx}`,

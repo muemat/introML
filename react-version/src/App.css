@@ -32,6 +32,8 @@
   justify-content: center;
   gap: 1.5rem;
   align-items: center;
+  position: relative;
+  z-index: 2;
 }
 
 .left-side-container {
@@ -119,9 +121,9 @@
 }
 
 .orange-box {
-  width: 600px;
+  width: 650px;
   max-width: 100%;
-  height: 720px;
+  height: 780px;
   max-height: calc(100vh - 4rem);
   background: #ffcc99;
   border: 4px solid #ff9800;
@@ -135,6 +137,7 @@
   padding: 1.5rem;
   overflow: hidden;
   position: relative;
+  z-index: 0;
 }
 
 .reset-btn {
@@ -202,8 +205,9 @@
 .control-group {
   margin-bottom: 1.5rem;
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
   width: auto;
 }
 
@@ -226,6 +230,13 @@
   gap: 0.6rem;
   flex-shrink: 0;
   margin-left: 0;
+}
+
+.big-buttons-row {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 .control-row {
@@ -351,23 +362,23 @@
   flex-shrink: 0;
 }
 
-/* Input circles - turquoise */
+/* Input circles - custom color */
 .input-circle {
-  border-color: #40e0d0;
-  color: #40e0d0;
+  border-color: #76bca5;
+  color: #76bca5;
 }
 
-/* Output circles - light blue */
+/* Output circles - custom color */
 .output-circle {
-  border-color: #87ceeb;
-  color: #87ceeb;
+  border-color: #6ca3ff;
+  color: #6ca3ff;
 }
 
-/* Highest output - darker */
+/* Highest output - darker variant of output color */
 .output-circle.highest-output {
-  border-color: #4682b4;
-  color: #4682b4;
-  background: #e6f3ff;
+  border-color: #3267d6;
+  color: #3267d6;
+  background: #e0edff;
 }
 
 .orange-circle {
@@ -440,8 +451,8 @@
 }
 
 .connection-lines line {
-  stroke: #000;
-  stroke-width: 2;
+  stroke: #777;
+  stroke-width: 1.5;
 }
 
 @media (max-width: 768px) {
