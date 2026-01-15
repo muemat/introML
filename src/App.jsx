@@ -324,7 +324,7 @@ function App() {
                       <TestDataBox 
                         key={index}
                         index={index} 
-                        imagePath={`/gfx/test0${index + 1}.png`} 
+                        imagePath={`public/gfx/test0${index + 1}.png`} 
                         isCorrect={isCorrect}
                         onClick={() => loadTrainingData(dataValues)}
                       />
@@ -413,7 +413,7 @@ const InputControl = React.forwardRef(({ value }, ref) => {
 
 function TrainingDataBox({ index, values, isCorrect, isLoaded, onClick }) {
   const imageNumber = String(index + 1).padStart(2, '0')
-  const imagePath = `/gfx/train${imageNumber}.png`
+  const imagePath = `public/gfx/train${imageNumber}.png`
   const statusIcon = isCorrect ? '✓' : '✕'
   const statusClass = isCorrect ? 'status-icon correct' : 'status-icon incorrect'
   
